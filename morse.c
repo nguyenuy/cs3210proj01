@@ -3,7 +3,7 @@
 #include <linux/proc_fs.h>
 #include <linux/sched.h>
 #include <asm/uaccess.h>
-#include <linux/slab.h>
+#include <linux/vmalloc.h>
 
 int len,temp;
 
@@ -38,17 +38,20 @@ struct file_operations proc_fops = {
 void create_new_proc_entry() 
 {
     proc_create("morse",0,NULL,&proc_fops);
-    msg=kmalloc(GFP_KERNEL,10*sizeof(char));
+    msg=vmalloc(PAGE_SIZE);
 }
 
 
 int proc_init (void) {
     create_new_proc_entry();
+    printk(KERN_INFO "Morse code module initialized.");
     return 0;
 }
 
 void proc_cleanup(void) {
     remove_proc_entry("morse",NULL);
+    vfree(msg);
+    printk(KERN_INFO "Morse code module cleaned up.");
 }
 
 MODULE_LICENSE("GPL"); 
