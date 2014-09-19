@@ -1,23 +1,56 @@
 #include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/proc_fs.h>
+#include <linux/sched.h>
+#include <asm/uaccess.h>
+#include <linux/slab.h>
 
-/* Defines the license for this LKM */
-MODULE_LICENSE("GPL");
+int len,temp;
 
-/* Init function called on module entry */
-int my_module_init( void )
+char *msg;
+
+int read_proc(struct file *filp,char *buf,size_t count,loff_t *offp ) 
 {
-    printk(KERN_INFO "my_module_init called.  Module is now loaded.\n");
+    if(count>temp) {
+        count=temp;
+    }
+    temp=temp-count;
+    copy_to_user(buf,msg, count);
+    if(count==0)
+        temp=len;
+   
+    return count;
+}
+
+int write_proc(struct file *filp,const char *buf,size_t count,loff_t *offp)
+{
+    copy_from_user(msg,buf,count);
+    len=count;
+    temp=len;
+    return count;
+}
+
+struct file_operations proc_fops = {
+    read: read_proc,
+    write: write_proc
+};
+
+void create_new_proc_entry() 
+{
+    proc_create("morse",0,NULL,&proc_fops);
+    msg=kmalloc(GFP_KERNEL,10*sizeof(char));
+}
+
+
+int proc_init (void) {
+    create_new_proc_entry();
     return 0;
 }
 
-/* Cleanup function called on module exit */
-void my_module_cleanup( void )
-{
-    printk(KERN_INFO "my_module_cleanup called.  Module is now unloaded.\n");
-    return;
+void proc_cleanup(void) {
+    remove_proc_entry("morse",NULL);
 }
 
-
-/* Declare entry and exit functions */
-module_init( my_module_init );
-module_exit( my_module_cleanup );
+MODULE_LICENSE("GPL"); 
+module_init(proc_init);
+module_exit(proc_cleanup);
