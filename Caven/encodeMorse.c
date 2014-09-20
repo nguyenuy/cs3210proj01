@@ -5,9 +5,25 @@
 #include <asm/uaccess.h>
 #include <linux/slab.h>
 
-int len,temp;
+#define CHAR_SIZE 256
+#define MORSE_BIN 16
 
+typedef __u16 morse_t;
+int len,temp;
 char *msg;
+morse_t charToBin[CHAR_SIZE];
+
+void initialize(){
+  int i=0;
+  for(; i<CHAR_SIZE;i++){
+    charToBin[i] = 0b11;
+  }
+  charToBin['a'] = 0b110;
+  charToBin['b'] = 0b10111;
+  charToBin['c'] = 0b10101;
+  charToBin['d'] = 0b1011;
+  charToBin['e'] = 0b11;
+}
 
 int read_proc(struct file *filp,char *buf,size_t count,loff_t *offp ) 
 {
@@ -23,12 +39,56 @@ int read_proc(struct file *filp,char *buf,size_t count,loff_t *offp )
   return count;
 }
 
+void print(char* head, int len){
+  int i=0; 
+  for(; i<len; i++){
+    printk(KERN_DEBUG "DBG\t%c ", *(head+i));
+  }
+}
+
 int write_proc(struct file *filp,const char *buf,size_t count,loff_t *offp)
 {
+  // note: cannot use malloc here.
+  size_t COPY_SIZE = count*sizeof(char)*20;
+  // unsigned long copy_from_user (void * to, const void __user * from, unsigned long n)
+  // to is in the kernel space, from is in the user space, n means the number of bytes to copy
+  printk(KERN_DEBUG "DBG\tcopy size is %ld\n",COPY_SIZE);
   copy_from_user(msg,buf,count);
-  len=count;
+  //char* newmsg = kmalloc(COPY_SIZE, GFP_KERNEL);
+  char* newmsg = vmalloc(COPY_SIZE);
+  char* p = newmsg;
+  int i=0;
+  for(; i<count; i++){
+    char ch = *(msg+i);
+    // note: I cannot put the rest of the loop in a function. It is wrong.
+    int shift = MORSE_BIN-1;
+    morse_t bin = charToBin[ch];
+    for( ; shift>=0; shift--){
+      morse_t mask = 1<<shift;
+      if((mask & bin) != 0)
+	break;
+    }
+    shift--;
+    printk(KERN_DEBUG "DBG\t%c\n", ch);
+    for(; shift>=0; shift--){
+      morse_t mask = 1<<shift;
+      if((mask & bin) != 0){
+	*(p++) = 'd';
+	*(p++) = 'i';
+	*(p++) = 't';
+      }else{
+	*(p++) = 'd';
+	*(p++) = 'a';
+	*(p++) = 'h';
+      }
+      *(p++) = (shift==0?',':'-');
+    }
+  }
+  *(p++) = '\0';
+  msg = newmsg;
+  len=COPY_SIZE;
   temp=len;
-  return count;
+  return COPY_SIZE;
 }
 
 struct file_operations proc_fops = {
@@ -43,6 +103,7 @@ void create_new_proc_entry()
 
 
 int proc_init (void) {
+  initialize();
   create_new_proc_entry();
   return 0;
 }

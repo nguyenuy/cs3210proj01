@@ -21,3 +21,7 @@ test:
 	clear
 	cat test.txt | encodeMorse	
 	rmmod morse
+	sudo make clean
+
+print:
+	cat /var/log/kern.log

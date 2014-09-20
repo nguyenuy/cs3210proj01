@@ -1,0 +1,4 @@
+while read line; do
+      echo $line > /proc/encodeBuffer
+      cat /proc/encodeBuffer
+done
