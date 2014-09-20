@@ -35,7 +35,7 @@ int read_proc(struct file *filp,char *buf,size_t count,loff_t *offp )
   copy_to_user(buf,msg, count);
   if(count==0)
     temp=len;
-   
+  vfree(msg);
   return count;
 }
 
@@ -93,6 +93,7 @@ struct file_operations proc_fops = {
  read: read_proc,
  write: write_proc
 };
+
 void create_new_proc_entry() 
 {
   proc_create("encodeBuffer",0,NULL,&proc_fops);
