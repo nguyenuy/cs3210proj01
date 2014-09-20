@@ -1,0 +1,4 @@
+while read line; do
+      echo $line > /proc/decodeBuffer
+      cat /proc/decodeBuffer
+done
