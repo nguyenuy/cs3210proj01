@@ -1,4 +1,6 @@
+rm -f result.txt
+touch result.txt
 while read line; do
       echo $line > /proc/encodeBuffer
-      cat /proc/encodeBuffer
+      cat /proc/encodeBuffer >> ./result.txt
 done

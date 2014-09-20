@@ -22,6 +22,7 @@ test:
 	cat test.txt | encodeMorse	
 	rmmod morse
 	sudo make clean
-
+	echo "the result is in result.txt; see the encodeMorse script;"
+	cat result.txt
 print:
 	cat /var/log/kern.log

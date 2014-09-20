@@ -52,7 +52,6 @@ int write_proc(struct file *filp,const char *buf,size_t count,loff_t *offp)
   size_t COPY_SIZE = count*sizeof(char)*20;
   // unsigned long copy_from_user (void * to, const void __user * from, unsigned long n)
   // to is in the kernel space, from is in the user space, n means the number of bytes to copy
-  printk(KERN_DEBUG "DBG\tcopy size is %ld\n",COPY_SIZE);
   copy_from_user(msg,buf,count);
   //char* newmsg = kmalloc(COPY_SIZE, GFP_KERNEL);
   char* newmsg = vmalloc(COPY_SIZE);
@@ -69,7 +68,6 @@ int write_proc(struct file *filp,const char *buf,size_t count,loff_t *offp)
 	break;
     }
     shift--;
-    printk(KERN_DEBUG "DBG\t%c\n", ch);
     for(; shift>=0; shift--){
       morse_t mask = 1<<shift;
       if((mask & bin) != 0){
@@ -81,7 +79,7 @@ int write_proc(struct file *filp,const char *buf,size_t count,loff_t *offp)
 	*(p++) = 'a';
 	*(p++) = 'h';
       }
-      *(p++) = (shift==0?',':'-');
+      *(p++) = (shift==0?' ':'-');
     }
   }
   *(p++) = '\0';
