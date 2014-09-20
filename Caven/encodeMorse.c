@@ -13,6 +13,44 @@ int len,temp;
 char *msg;
 morse_t charToBin[CHAR_SIZE];
 
+int delen, detemp;
+char* demsg;
+
+int read_proc_decode(struct file *filp,char *buf,size_t count,loff_t *offp ) 
+{
+  if(count>detemp)
+    {
+      count=detemp;
+    }
+  detemp=detemp-count;
+  copy_to_user(buf,demsg, count);
+  if(count==0)
+    detemp=delen;
+   
+  return count;
+}
+
+int write_proc_decode(struct file *filp,const char *buf,size_t count,loff_t *offp)
+{
+  copy_from_user(demsg,buf,count);
+  delen=count;
+  detemp=delen;
+  return count;
+}
+
+struct file_operations proc_fops_decode = {
+ read: read_proc_decode,
+ write: write_proc_decode
+};
+
+void create_new_proc_entry_decode() 
+{
+  proc_create("decodeBuffer",0,NULL,&proc_fops_decode);
+  demsg=kmalloc(GFP_KERNEL,10*sizeof(char));
+}
+
+
+
 void initialize(){
   int i=0;
   for(; i<CHAR_SIZE;i++){
@@ -104,10 +142,12 @@ void create_new_proc_entry()
 int proc_init (void) {
   initialize();
   create_new_proc_entry();
+  create_new_proc_entry_decode();
   return 0;
 }
 
 void proc_cleanup(void) {
+  remove_proc_entry("decodeBuffer",NULL);
   remove_proc_entry("encodeBuffer",NULL);
 }
 

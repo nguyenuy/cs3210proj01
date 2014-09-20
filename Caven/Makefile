@@ -16,13 +16,19 @@ clean:
 	$(MAKE) -C $(KERNELDIR) M=$(PWD) clean
 
 
-test: 
+encode: #testing the encoding 
 	insmod morse.ko
 	clear
-	cat test.txt | encodeMorse	
+	sudo sh -c "cat test.txt | encodeMorse"
 	rmmod morse
 	sudo make clean
-	echo "the result is in result.txt; see the encodeMorse script;"
-	cat result.txt
+
+decode: #testing the decoding
+	insmod morse.ko
+	clear
+	sudo sh -c "cat result.txt | decodeMorse"
+	rmmod morse
+	sudo make clean
+
 print:
 	cat /var/log/kern.log
