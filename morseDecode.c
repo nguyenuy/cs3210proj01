@@ -96,7 +96,7 @@ int write_proc(struct file *filp,const char *buf,size_t count,loff_t *offp)
     newmsg = vmalloc(COPY_SIZE);
     
     if(newmsg == NULL) {
-        kprint(KERN_INFO "ERR: NOMEM");
+        printk(KERN_INFO "ERR: NOMEM");
         return -1;
     }
     
