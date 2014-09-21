@@ -6,13 +6,21 @@
 #include <linux/vmalloc.h>
 
 #define CHAR_SIZE 256
+#define MORSE_BIN 16
+
+typedef __u16 morse_t;
 
 int len,temp;
 char *msg;
+char * newmsg;
 char binToChar[CHAR_SIZE];
 
 void initialize_morse_map() {
     //dot=1, dash=0
+    int i = 0;
+    for(; i<CHAR_SIZE; i++) {
+        binToChar[i] = 0;
+    }
     binToChar[0b110]    = 'a';
     binToChar[0b10111]  = 'b';
     binToChar[0b10101]  = 'c';
@@ -81,10 +89,44 @@ int read_proc(struct file *filp,char *buf,size_t count,loff_t *offp )
 
 int write_proc(struct file *filp,const char *buf,size_t count,loff_t *offp)
 {
+
+    size_t COPY_SIZE = count * sizeof(char);
     copy_from_user(msg,buf,count);
-    len=count;
+    
+    newmsg = vmalloc(COPY_SIZE);
+    
+    if(newmsg == NULL) {
+        kprint(KERN_INFO "ERR: NOMEM");
+        return -1;
+    }
+    
+    int i=0;
+    char* p = newmsg;
+    morse_t tempMorse = 1;
+    
+    for(i=0; i < count; i++) {
+        char ch = *(msg+i);
+        if(ch == 'i') { //dit
+            tempMorse = tempMorse << 1;
+            tempMorse += 1;
+        } else if (ch == 'a') { //dah
+            tempMorse = tempMorse << 1;
+            //tempMorse += 0
+        }
+        
+        if(ch == ' ' || i == (count-1)) { //reset for new character or EoS
+            *(p++) = binToChar[tempMorse]; //write the character to the new string
+            tempMorse = 1; //reset tempMorse
+        }
+        
+    }
+    *(p++) = '\0';
+    
+    msg = newmsg;
+    len=COPY_SIZE;
     temp=len;
-    return count;
+    
+    return COPY_SIZE;
 }
 
 struct file_operations proc_fops = {
@@ -109,6 +151,7 @@ int proc_init (void) {
 void proc_cleanup(void) {
     remove_proc_entry("morseDecode",NULL);
     vfree(msg);
+    vfree(newmsg);
     printk(KERN_INFO "Morse code module cleaned up.");
 }
 
