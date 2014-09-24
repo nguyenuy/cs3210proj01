@@ -19,7 +19,8 @@ clean:
 encode: #testing the encoding 
 	insmod morse.ko
 	clear
-	sudo sh -c "cat test.txt | encodeMorse"
+	sudo sh -c "cat test1.txt | encodeMorse > result1.txt"
+	sudo sh -c "cat test2.txt | encodeMorse > result2.txt"
 	rmmod morse
 	sudo make clean
 
