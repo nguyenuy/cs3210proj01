@@ -1,9 +1,9 @@
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/proc_fs.h>
-#include<linux/sched.h>
+#include <linux/string.h>
 #include <asm/uaccess.h>
-#include <linux/slab.h>
+#include <linux/vmalloc.h>
 
 #define CHAR_SIZE 256
 #define MORSE_BIN 16
@@ -13,48 +13,12 @@ int len,temp;
 char *msg;
 morse_t charToBin[CHAR_SIZE];
 
-int delen, detemp;
-char* demsg;
-
-int read_proc_decode(struct file *filp,char *buf,size_t count,loff_t *offp ) 
-{
-  if(count>detemp)
-    {
-      count=detemp;
-    }
-  detemp=detemp-count;
-  copy_to_user(buf,demsg, count);
-  if(count==0)
-    detemp=delen;
-   
-  return count;
-}
-
-int write_proc_decode(struct file *filp,const char *buf,size_t count,loff_t *offp)
-{
-  copy_from_user(demsg,buf,count);
-  delen=count;
-  detemp=delen;
-  return count;
-}
-
-struct file_operations proc_fops_decode = {
- read: read_proc_decode,
- write: write_proc_decode
-};
-
-void create_new_proc_entry_decode() 
-{
-  proc_create("decodeBuffer",0,NULL,&proc_fops_decode);
-  demsg=kmalloc(GFP_KERNEL,10*sizeof(char));
-}
-
 
 
 void initialize(){
   int i=0;
   for(; i<CHAR_SIZE;i++){
-    charToBin[i] = 0b11;
+    charToBin[i] = 0;
   }
   charToBin['a'] = 0b110;
   charToBin['b'] = 0b10111;
@@ -107,6 +71,7 @@ void initialize(){
   charToBin[';'] = 0b1010101;
   charToBin['_'] = 0b1110010;
   charToBin['@'] = 0b1100101;
+  charToBin[' '] = 0b11111111;
 }
 
 int read_proc(struct file *filp,char *buf,size_t count,loff_t *offp ) 
@@ -119,31 +84,18 @@ int read_proc(struct file *filp,char *buf,size_t count,loff_t *offp )
   copy_to_user(buf,msg, count);
   if(count==0)
     temp=len;
-  vfree(msg);
   return count;
-}
-
-void print(char* head, int len){
-  int i=0; 
-  for(; i<len; i++){
-    printk(KERN_DEBUG "DBG\t%c ", *(head+i));
-  }
 }
 
 int write_proc(struct file *filp,const char *buf,size_t count,loff_t *offp)
 {
-  // note: cannot use malloc here.
   size_t COPY_SIZE = count*sizeof(char)*20;
-  // unsigned long copy_from_user (void * to, const void __user * from, unsigned long n)
-  // to is in the kernel space, from is in the user space, n means the number of bytes to copy
   copy_from_user(msg,buf,count);
-  //char* newmsg = kmalloc(COPY_SIZE, GFP_KERNEL);
   char* newmsg = vmalloc(COPY_SIZE);
   char* p = newmsg;
   int i=0;
   for(; i<count; i++){
     char ch = *(msg+i);
-    // note: I cannot put the rest of the loop in a function. It is wrong.
     int shift = MORSE_BIN-1;
     morse_t bin = charToBin[ch];
     for( ; shift>=0; shift--){
@@ -166,10 +118,11 @@ int write_proc(struct file *filp,const char *buf,size_t count,loff_t *offp)
       *(p++) = (shift==0?' ':'-');
     }
   }
-  *(p++) = '\0';
-  msg = newmsg;
+  *(p) = '\0';
+  memcpy(msg, newmsg, COPY_SIZE);
   len=COPY_SIZE;
   temp=len;
+  vfree(newmsg);
   return COPY_SIZE;
 }
 
@@ -181,19 +134,17 @@ struct file_operations proc_fops = {
 void create_new_proc_entry() 
 {
   proc_create("encodeBuffer",0,NULL,&proc_fops);
-  msg=kmalloc(GFP_KERNEL,10*sizeof(char));
+  msg = vmalloc(PAGE_SIZE);
 }
 
 
 int proc_init (void) {
   initialize();
   create_new_proc_entry();
-  create_new_proc_entry_decode();
   return 0;
 }
 
 void proc_cleanup(void) {
-  remove_proc_entry("decodeBuffer",NULL);
   remove_proc_entry("encodeBuffer",NULL);
 }
 
