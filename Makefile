@@ -1,7 +1,6 @@
 ifneq ($(KERNELRELEASE),)
-	#obj-m := encodeMorse.o
-	obj-m := morse.o
-	morse-objs := encodeMorse.o 
+	obj-m := encodeMorse.o
+    obj-m := decodeMorse.o
 else
 
 KERNELDIR ?= /lib/modules/$(shell uname -r)/build
@@ -17,18 +16,18 @@ clean:
 
 
 encode: #testing the encoding 
-	insmod morse.ko
+	insmod encodeMorse.ko
 	clear
 	sudo sh -c "cat test1.txt | encodeMorse > result1.txt"
 	sudo sh -c "cat test2.txt | encodeMorse > result2.txt"
-	rmmod morse
+	rmmod decodeMorse.ko
 	sudo make clean
 
 decode: #testing the decoding
-	insmod morse.ko
+	insmod decodeMorse.ko
 	clear
 	sudo sh -c "cat result.txt | decodeMorse"
-	rmmod morse
+	rmmod decodeMorse.ko
 	sudo make clean
 
 print:
