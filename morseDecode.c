@@ -1,7 +1,7 @@
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/proc_fs.h>
-#include <linux/sched.h>
+#include <linux/string.h>
 #include <asm/uaccess.h>
 #include <linux/vmalloc.h>
 
@@ -72,6 +72,7 @@ void initialize_morse_map() {
     binToChar[0b1010101] = ';';
     binToChar[0b1110010] = '_';
     binToChar[0b1100101] = '@';
+    binToChar[0b11111111]= ' ';
 }
 
 int read_proc(struct file *filp,char *buf,size_t count,loff_t *offp ) 
@@ -93,14 +94,8 @@ int write_proc(struct file *filp,const char *buf,size_t count,loff_t *offp)
     size_t COPY_SIZE = count * sizeof(char);
     copy_from_user(msg,buf,count);
     
-    newmsg = vmalloc(COPY_SIZE);
-    
-    if(newmsg == NULL) {
-        printk(KERN_INFO "ERR: NOMEM");
-        return -1;
-    }
-    
     int i=0;
+    
     char* p = newmsg;
     morse_t tempMorse = 1;
     
@@ -122,7 +117,7 @@ int write_proc(struct file *filp,const char *buf,size_t count,loff_t *offp)
     }
     *(p++) = '\0';
     
-    msg = newmsg;
+    memcpy(msg, newmsg, COPY_SIZE);
     len=COPY_SIZE;
     temp=len;
     
@@ -137,7 +132,14 @@ struct file_operations proc_fops = {
 void create_new_proc_entry() 
 {
     proc_create("morseDecode",0,NULL,&proc_fops);
-    msg=vmalloc(PAGE_SIZE);
+    msg = vmalloc(PAGE_SIZE);
+    if(msg == NULL) {
+        return -ENOMEM;
+    }
+    newmsg = vmalloc(PAGE_SIZE);
+    if(newmsg == NULL) {
+        return -ENOMEM;
+    }
 }
 
 
