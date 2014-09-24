@@ -132,11 +132,11 @@ struct file_operations proc_fops = {
 void create_new_proc_entry() 
 {
     proc_create("decodeBuffer",0,NULL,&proc_fops);
-    msg = vmalloc(PAGE_SIZE);
+    msg = vmalloc(PAGE_SIZE*4);
     if(msg == NULL) {
         return -ENOMEM;
     }
-    newmsg = vmalloc(PAGE_SIZE);
+    newmsg = vmalloc(PAGE_SIZE*4);
     if(newmsg == NULL) {
         return -ENOMEM;
     }

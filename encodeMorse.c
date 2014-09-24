@@ -97,7 +97,7 @@ int read_proc(struct file *filp,char *buf,size_t count,loff_t *offp )
 
 int write_proc(struct file *filp,const char *buf,size_t count,loff_t *offp)
 {
-  size_t COPY_SIZE = count*sizeof(char)*20;
+  size_t COPY_SIZE = count*sizeof(char)*27;
   copy_from_user(msg,buf,count);
   char* newmsg = vmalloc(COPY_SIZE);
   char* p = newmsg;
@@ -142,7 +142,7 @@ struct file_operations proc_fops = {
 void create_new_proc_entry() 
 {
   proc_create("encodeBuffer",0,NULL,&proc_fops);
-  msg = vmalloc(PAGE_SIZE);
+  msg = vmalloc(PAGE_SIZE*4);
 }
 
 
