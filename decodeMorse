@@ -1,4 +1,4 @@
 while read line; do
-      echo $line > /proc/morseDecode
-      cat /proc/morseDecode
+      echo $line > /proc/decodeBuffer
+      cat /proc/decodeBuffer
 done
