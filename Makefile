@@ -1,5 +1,5 @@
 ifneq ($(KERNELRELEASE),)
-	obj-m += encodeMorse.o
+    obj-m += encodeMorse.o
     obj-m += decodeMorse.o
 else
 
