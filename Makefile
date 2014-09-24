@@ -20,7 +20,7 @@ encode: #testing the encoding
 	clear
 	sudo sh -c "cat test1.txt | encodeMorse > result1.txt"
 	sudo sh -c "cat test2.txt | encodeMorse > result2.txt"
-	rmmod decodeMorse.ko
+	rmmod encodeMorse.ko
 	sudo make clean
 
 decode: #testing the decoding
