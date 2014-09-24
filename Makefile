@@ -1,6 +1,6 @@
 ifneq ($(KERNELRELEASE),)
-	obj-m := encodeMorse.o
-    obj-m := decodeMorse.o
+	obj-m += encodeMorse.o
+    obj-m += decodeMorse.o
 else
 
 KERNELDIR ?= /lib/modules/$(shell uname -r)/build
