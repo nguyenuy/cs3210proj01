@@ -72,6 +72,14 @@ void initialize(){
   charToBin['_'] = 0b1110010;
   charToBin['@'] = 0b1100101;
   charToBin[' '] = 0b11111111;
+  
+  char diff = 'A'-'a';
+  char ch = 'A';
+  for(; ch<='Z'; ch++){
+    char lower = ch - diff;
+    charToBin[ch] = charToBin[lower];
+  }
+  
 }
 
 int read_proc(struct file *filp,char *buf,size_t count,loff_t *offp ) 

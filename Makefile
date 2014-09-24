@@ -26,7 +26,8 @@ encode: #testing the encoding
 decode: #testing the decoding
 	insmod decodeMorse.ko
 	clear
-	sudo sh -c "cat result.txt | decodeMorse"
+	sudo sh -c "cat result1.txt | decodeMorse"
+	sudo sh -c "cat result2.txt | decodeMorse"
 	rmmod decodeMorse.ko
 	sudo make clean
 
