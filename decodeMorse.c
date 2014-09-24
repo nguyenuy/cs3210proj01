@@ -131,7 +131,7 @@ struct file_operations proc_fops = {
 
 void create_new_proc_entry() 
 {
-    proc_create("morseDecode",0,NULL,&proc_fops);
+    proc_create("decodeBuffer",0,NULL,&proc_fops);
     msg = vmalloc(PAGE_SIZE);
     if(msg == NULL) {
         return -ENOMEM;
