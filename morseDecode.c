@@ -11,7 +11,7 @@
 typedef __u16 morse_t;
 
 int len,temp;
-char *msg;
+char * msg;
 char * newmsg;
 char binToChar[CHAR_SIZE];
 
@@ -72,6 +72,7 @@ void initialize_morse_map() {
     binToChar[0b1010101] = ';';
     binToChar[0b1110010] = '_';
     binToChar[0b1100101] = '@';
+    binToChar[0b11111111] = ' ';
 }
 
 int read_proc(struct file *filp,char *buf,size_t count,loff_t *offp ) 
@@ -79,28 +80,35 @@ int read_proc(struct file *filp,char *buf,size_t count,loff_t *offp )
     if(count>temp) {
         count=temp;
     }
+    
     temp=temp-count;
-    copy_to_user(buf,msg, count);
+    if(copy_to_user(buf,msg, count)) { //copies whatever is in msg to buf
+        return -EFAULT;
+    }
     if(count==0)
         temp=len;
-   
+    
     return count;
 }
 
 int write_proc(struct file *filp,const char *buf,size_t count,loff_t *offp)
-{
-
-    size_t COPY_SIZE = count * sizeof(char);
-    copy_from_user(msg,buf,count);
+{   
+    if(copy_from_user(msg,buf,count)) {
+        return -EFAULT;
+    }
+    int i = 0;
+    size_t newcount = 1;
+    for(; i<count; i++) {
+        if (msg[i] == ' ') newcount++;
+    }
     
-    newmsg = vmalloc(COPY_SIZE);
+    newmsg = vmalloc(newcount * sizeof(char));
     
     if(newmsg == NULL) {
         printk(KERN_INFO "ERR: NOMEM");
         return -1;
     }
     
-    int i=0;
     char* p = newmsg;
     morse_t tempMorse = 1;
     
@@ -123,10 +131,12 @@ int write_proc(struct file *filp,const char *buf,size_t count,loff_t *offp)
     *(p++) = '\0';
     
     msg = newmsg;
-    len=COPY_SIZE;
+    len=newcount;
     temp=len;
     
-    return COPY_SIZE;
+    vfree(newmsg);
+    
+    return newcount;
 }
 
 struct file_operations proc_fops = {
@@ -137,13 +147,13 @@ struct file_operations proc_fops = {
 void create_new_proc_entry() 
 {
     proc_create("morseDecode",0,NULL,&proc_fops);
-    msg=vmalloc(PAGE_SIZE);
 }
 
 
 int proc_init (void) {
     initialize_morse_map();
     create_new_proc_entry();
+    msg = vmalloc(PAGE_SIZE);
     printk(KERN_INFO "Morse code module initialized.");
     return 0;
 }
@@ -151,7 +161,6 @@ int proc_init (void) {
 void proc_cleanup(void) {
     remove_proc_entry("morseDecode",NULL);
     vfree(msg);
-    vfree(newmsg);
     printk(KERN_INFO "Morse code module cleaned up.");
 }
 
